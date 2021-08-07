@@ -1,5 +1,5 @@
 {
-  "name": "hydyco-doc-plugin",
+  "name": "@hydyco/docs-plugin",
   "version": "0.0.1",
   "description": "Auto generated api docs using swagger",
   "main": "index.js",
