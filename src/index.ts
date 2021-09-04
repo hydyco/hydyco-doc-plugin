@@ -1,11 +1,9 @@
 import { Router, IRouter, Request, Response } from "express";
-import { HydycoFile } from "@hydyco/core";
-import * as swaggerUi from "swagger-ui-express";
- 
+import swaggerUi from "swagger-ui-express";
+import { readAllMappingFiles } from "@hydyco/core/main/file";
+
 const router: IRouter = Router();
- 
-const file = new HydycoFile();
- 
+
 /**
  * Util
  * @param {string} letter - any word
@@ -14,7 +12,7 @@ const file = new HydycoFile();
 const capitalizeFirstLetter = ([first, ...rest]) => {
   return first.toUpperCase() + rest;
 };
- 
+
 /**
  * Swagger date type parser
  * @param {string} type
@@ -28,7 +26,7 @@ const parseSwaggerTypes = (type: any) => {
       return type;
   }
 };
- 
+
 export interface IDocsSchema {
   info: {
     description?: string;
@@ -41,14 +39,14 @@ export interface IDocsSchema {
   paths: {};
   definitions: {};
 }
- 
+
 /**
  * Generate Swagger Doc Json
  * @param {IDocsSchema} - config data for swagger documentation
  * @return {IRouter} - express router
  */
- 
-const useSwaggerDocs = (
+
+const DocsPlugin = (
   config: IDocsSchema = {
     info: {},
     host: "localhost:3005",
@@ -72,7 +70,7 @@ const useSwaggerDocs = (
       paths: { ...config.paths },
       definitions: { ...config.definitions },
     };
- 
+
     modelFiles.forEach((model: any) => {
       if (model.show) {
         const schemas = Object.values(model.schema);
@@ -218,21 +216,21 @@ const useSwaggerDocs = (
             },
           },
         };
- 
+
         if (!model.operations.list)
           delete docObject.paths[`/${model.name}`].get;
         if (!model.operations.create)
           delete docObject.paths[`/${model.name}`].post;
         if (!model.operations.delete)
           delete docObject.paths[`/${model.name}`].delete;
- 
+
         if (!model.operations.read)
           delete docObject.paths[`/${model.name}/{id}`].read;
         if (!model.operations.update)
           delete docObject.paths[`/${model.name}/{id}`].update;
         if (!model.operations.deleteAll)
           delete docObject.paths[`/${model.name}/{id}`].deleteAll;
- 
+
         docObject.definitions[capitalizeFirstLetter(model.name)] = {
           type: "object",
           properties: schemas.reduce((prev: any, curr: any) => {
@@ -260,13 +258,13 @@ const useSwaggerDocs = (
         };
       }
     });
- 
+
     return docObject;
   };
- 
+
   // register swagger ui
   router.use("/api-docs", swaggerUi.serve);
- 
+
   // config swagger
   router.get(
     "/api-docs",
@@ -276,13 +274,13 @@ const useSwaggerDocs = (
       },
     })
   );
- 
+
   router.get("/api-json", (request: Request, response: Response) => {
-    const modelFiles = file.readAllMappingFiles();
+    const modelFiles = readAllMappingFiles();
     return response.json(docsParseSchema(modelFiles));
   });
- 
+
   return router;
 };
- 
-export default useSwaggerDocs;
+
+export { DocsPlugin };
